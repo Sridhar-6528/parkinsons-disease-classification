@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parkinson's Multimodal AI Diagnostic System | 3D Swin + DER++</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(22, 30, 46, 0.85);
+            --accent-blue: #38bdf8;
+            --accent-purple: #c084fc;
+            --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            --text-main: #f3f4f6;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(192, 132, 252, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .badge-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.8rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .card h2 {
+            font-size: 1.35rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--accent-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.8rem;
+        }
+
+        .form-section {
+            margin-bottom: 1.2rem;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.6rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        select, input[type="file"], input[type="number"] {
+            width: 100%;
+            padding: 0.75rem 0.9rem;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            outline: none;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+            accent-color: var(--accent-purple);
+        }
+
+        .range-val {
+            min-width: 45px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        button.btn-primary {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0284c7, #9333ea);
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+            margin-top: 1rem;
+        }
+
+        button.btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6);
+        }
+
+        .btn-secondary {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--accent-red);
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        .btn-clear-inline {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: var(--accent-red);
+            font-size: 0.78rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-clear-inline:hover {
+            background: rgba(248, 113, 113, 0.25);
+            color: #ffffff;
+        }
+
+
+        .result-container {
+            display: none;
+        }
+
+        .diagnosis-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .diagnosis-pill {
+            display: inline-block;
+            padding: 0.8rem 2.2rem;
+            border-radius: 30px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .diag-Control { background: rgba(52, 211, 153, 0.15); border: 2px solid var(--accent-green); color: var(--accent-green); }
+        .diag-Prodromal { background: rgba(251, 146, 60, 0.15); border: 2px solid var(--accent-orange); color: var(--accent-orange); }
+        .diag-PD { background: rgba(248, 113, 113, 0.15); border: 2px solid var(--accent-red); color: var(--accent-red); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 0.8rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-card .val {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .metric-card .lbl {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .live-verification-box {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .live-verification-box h3 {
+            font-size: 0.95rem;
+            color: var(--accent-blue);
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .live-metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            text-align: center;
+        }
+
+        .prob-bar-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .prob-item {
+            margin-bottom: 0.9rem;
+        }
+
+        .prob-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.6s ease;
+        }
+
+        .fill-Control { background: var(--accent-green); }
+        .fill-Prodromal { background: var(--accent-orange); }
+        .fill-PD { background: var(--accent-red); }
+
+        .slice-gallery {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .slice-gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .slice-card {
+            text-align: center;
+        }
+
+        .slice-card img {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: #000;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--accent-blue);
+        }
+
+        .spinner-icon {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(56, 189, 248, 0.2);
+            border-top: 4px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Parkinson's Multimodal AI Diagnostic Engine</h1>
+            <p>3D Swin Transformer + Bidirectional Cross-Attention + DER++ Continual Learning</p>
+            <div class="badge-bar">
+                <span class="badge">MRI + DaTscan SPECT Multimodal</span>
+                <span class="badge">190 PPMI Subject Cohort</span>
+                <span class="badge">3-Class Diagnosis (Control | Prodromal | PD)</span>
+                <span class="badge">Shannon Decision Entropy</span>
+            </div>
+        </header>
+
+        <div class="grid-layout">
+            <!-- Left Panel: Form Controls -->
+            <div class="card">
+                <h2>⚙️ Diagnostic Parameters & Input Data</h2>
+
+                <form id="diag-form" enctype="multipart/form-dict">
+                    <!-- Model Selection -->
+                    <div class="form-section">
+                        <div class="section-title">1. Model Architecture & Checkpoint Version</div>
+                        <div class="form-group" style="margin-bottom: 0.8rem;">
+                            <label for="model_type" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.3rem;">Architecture Variant:</label>
+                            <select id="model_type" name="model_type">
+                                <option value="proposed" class="opt-finetuned" selected>Proposed Multimodal (3D Swin + Cross-Attention + DER++)</option>
+                                <option value="mri_only" class="opt-finetuned">Unimodal MRI-Only (3D Swin Transformer)</option>
+                                <option value="conv_fusion" class="opt-untuned">Conventional Concat Fusion</option>
+                                <option value="no_der" class="opt-untuned">Ablation Study (Without DER++)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ckpt_version" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.3rem;">Weights Version:</label>
+                            <select id="ckpt_version" name="ckpt_version">
+                                <option value="fine_tuned" selected>✨ DER++ Fine-Tuned Model (Adapted on LONI Cohort)</option>
+                                <option value="baseline">🏛️ Original Baseline Model (Pre-trained Checkpoint)</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Input Scans Selection -->
+                    <div class="form-section">
+                        <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>2. SELECT PRE-LOADED SCAN FILES OR UPLOAD CUSTOM</span>
+                            <button type="button" id="btn-clear-header" class="btn-clear-inline">🧹 Clear Selections</button>
+                        </div>
+
+                        <!-- MRI File -->
+                        <div class="form-group" id="mri-input-group">
+                            <label for="selected_mri">Structural MRI Scan File (.nii, .pt, .dcm, .zip, .png)</label>
+                            <select id="selected_mri" name="selected_mri">
+                                <option value="">-- Choose Pre-loaded MRI Sample --</option>
+                            </select>
+                            <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">Or upload custom MRI scan (.nii, .pt, .dcm, or .zip of DICOMs):</div>
+                            <input type="file" id="mri_file" name="mri_file" accept=".nii,.gz,.pt,.dcm,.zip,.png,.jpg,.jpeg">
+                            <div id="mri_status_msg" style="margin-top: 0.35rem; font-size: 0.8rem; color: var(--accent-blue); font-weight: 500; display: none;"></div>
+                        </div>
+
+                        <!-- SPECT File -->
+                        <div class="form-group" id="spect-input-group">
+                            <label for="selected_spect">DaTscan SPECT Scan File (.nii, .pt, .dcm, .zip, .png)</label>
+                            <select id="selected_spect" name="selected_spect">
+                                <option value="">-- Choose Pre-loaded SPECT Sample --</option>
+                            </select>
+                            <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">Or upload custom SPECT scan (.nii, .pt, .dcm, or .zip of DICOMs):</div>
+                            <input type="file" id="spect_file" name="spect_file" accept=".nii,.gz,.pt,.dcm,.zip,.png,.jpg,.jpeg">
+                            <div id="spect_status_msg" style="margin-top: 0.35rem; font-size: 0.8rem; color: var(--accent-blue); font-weight: 500; display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.8rem; margin-top: 1rem;">
+                        <button type="submit" class="btn-primary" style="flex: 2; margin-top: 0;">⚡ Execute Diagnostic Inference Engine</button>
+                        <button type="button" id="btn-reset-all" class="btn-secondary" style="flex: 1; margin-top: 0;">🧹 Clear</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Panel: Results & Visualization -->
+            <div class="card">
+                <h2>📊 AI Diagnostic Outcomes & Slice Renders</h2>
+
+                <div id="placeholder-box" style="text-align: center; padding: 4rem 0; color: var(--text-muted);">
+                    Select diagnostic options and press <b>Execute Diagnostic Inference Engine</b> to analyze scans.
+                </div>
+
+                <div class="loading-spinner" id="spinner">
+                    <div class="spinner-icon"></div>
+                    <p style="font-weight: 500;">Processing 3D Volume Tensors & Computing Cross-Attention Maps...</p>
+                </div>
+
+                <div class="result-container" id="result-box">
+                    <div class="diagnosis-header">
+                        <div class="diagnosis-pill" id="diag-pill">--</div>
+                    </div>
+
+                    <!-- Metric Cards -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="val" id="conf-val">0.0%</div>
+                            <div class="lbl">Confidence Score</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="val" id="entropy-val">0.00</div>
+                            <div class="lbl">Decision Entropy (bits)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="val" id="arch-val">Proposed</div>
+                            <div class="lbl">Active Model</div>
+                        </div>
+                    </div>
+
+                    <!-- Probability Bars -->
+                    <div class="prob-bar-container">
+                        <div class="prob-item">
+                            <div class="prob-header"><span>Control (Healthy)</span><span id="prob-Control-val">0%</span></div>
+                            <div class="progress-track"><div class="progress-fill fill-Control" id="prob-Control-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="prob-item">
+                            <div class="prob-header"><span>Prodromal Stage</span><span id="prob-Prodromal-val">0%</span></div>
+                            <div class="progress-track"><div class="progress-fill fill-Prodromal" id="prob-Prodromal-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="prob-item">
+                            <div class="prob-header"><span>Parkinson's Disease (PD)</span><span id="prob-PD-val">0%</span></div>
+                            <div class="progress-track"><div class="progress-fill fill-PD" id="prob-PD-bar" style="width: 0%;"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Slice Previews -->
+                    <div class="slice-gallery">
+                        <div class="slice-card" id="mri-slice-box" style="display: none;">
+                            <img id="mri-img" src="" alt="MRI Middle Slice">
+                        </div>
+                        <div class="slice-card" id="spect-slice-box" style="display: none;">
+                            <img id="spect-img" src="" alt="SPECT Middle Slice">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mriSelect = document.getElementById('selected_mri');
+        const spectSelect = document.getElementById('selected_spect');
+        const mriFile = document.getElementById('mri_file');
+        const spectFile = document.getElementById('spect_file');
+        const mriStatus = document.getElementById('mri_status_msg');
+        const spectStatus = document.getElementById('spect_status_msg');
+
+        function clearFileInput(fileInput) {
+            fileInput.value = "";
+            try {
+                fileInput.type = "text";
+                fileInput.type = "file";
+            } catch (e) {}
+        }
+
+        function updateMriMutualExclusion(source) {
+            if (source === 'file' && mriFile.files && mriFile.files.length > 0) {
+                mriSelect.value = "";
+                mriSelect.selectedIndex = 0;
+                mriSelect.style.opacity = "0.4";
+                if (mriStatus) {
+                    mriStatus.style.display = "block";
+                    mriStatus.textContent = `✓ Custom file "${mriFile.files[0].name}" selected (pre-loaded dropdown reset)`;
+                }
+            } else if (source === 'select' && mriSelect.selectedIndex > 0) {
+                clearFileInput(mriFile);
+                mriSelect.style.opacity = "1.0";
+                if (mriStatus) {
+                    mriStatus.style.display = "none";
+                    mriStatus.textContent = "";
+                }
+            } else if (!mriFile.files || mriFile.files.length === 0) {
+                mriSelect.style.opacity = "1.0";
+                if (mriStatus) {
+                    mriStatus.style.display = "none";
+                    mriStatus.textContent = "";
+                }
+            }
+        }
+
+        function updateSpectMutualExclusion(source) {
+            if (source === 'file' && spectFile.files && spectFile.files.length > 0) {
+                spectSelect.value = "";
+                spectSelect.selectedIndex = 0;
+                spectSelect.style.opacity = "0.4";
+                if (spectStatus) {
+                    spectStatus.style.display = "block";
+                    spectStatus.textContent = `✓ Custom file "${spectFile.files[0].name}" selected (pre-loaded dropdown reset)`;
+                }
+            } else if (source === 'select' && spectSelect.selectedIndex > 0) {
+                clearFileInput(spectFile);
+                spectSelect.style.opacity = "1.0";
+                if (spectStatus) {
+                    spectStatus.style.display = "none";
+                    spectStatus.textContent = "";
+                }
+            } else if (!spectFile.files || spectFile.files.length === 0) {
+                spectSelect.style.opacity = "1.0";
+                if (spectStatus) {
+                    spectStatus.style.display = "none";
+                    spectStatus.textContent = "";
+                }
+            }
+        }
+
+        function clearAllInputs() {
+            mriSelect.value = "";
+            mriSelect.selectedIndex = 0;
+            mriSelect.style.opacity = "1.0";
+
+            spectSelect.value = "";
+            spectSelect.selectedIndex = 0;
+            spectSelect.style.opacity = "1.0";
+
+            clearFileInput(mriFile);
+            clearFileInput(spectFile);
+
+            if (mriStatus) {
+                mriStatus.style.display = "none";
+                mriStatus.textContent = "";
+            }
+            if (spectStatus) {
+                spectStatus.style.display = "none";
+                spectStatus.textContent = "";
+            }
+        }
+
+        mriFile.addEventListener('change', () => updateMriMutualExclusion('file'));
+        mriFile.addEventListener('input', () => updateMriMutualExclusion('file'));
+        mriSelect.addEventListener('change', () => updateMriMutualExclusion('select'));
+        mriSelect.addEventListener('input', () => updateMriMutualExclusion('select'));
+
+        spectFile.addEventListener('change', () => updateSpectMutualExclusion('file'));
+        spectFile.addEventListener('input', () => updateSpectMutualExclusion('file'));
+        spectSelect.addEventListener('change', () => updateSpectMutualExclusion('select'));
+        spectSelect.addEventListener('input', () => updateSpectMutualExclusion('select'));
+
+        const ckptSelect = document.getElementById('ckpt_version');
+        const modelSelect = document.getElementById('model_type');
+
+        function updateCkptOptionsVisibility() {
+            if (!ckptSelect || !modelSelect) return;
+            const isFineTuned = (ckptSelect.value === 'fine_tuned');
+            const untunedOptions = modelSelect.querySelectorAll('.opt-untuned');
+            
+            untunedOptions.forEach(opt => {
+                if (isFineTuned) {
+                    opt.style.display = 'none';
+                    opt.disabled = true;
+                    opt.hidden = true;
+                } else {
+                    opt.style.display = '';
+                    opt.disabled = false;
+                    opt.hidden = false;
+                }
+            });
+
+            if (isFineTuned && (modelSelect.value === 'conv_fusion' || modelSelect.value === 'no_der')) {
+                modelSelect.value = 'proposed';
+            }
+        }
+
+        if (ckptSelect) {
+            ckptSelect.addEventListener('change', updateCkptOptionsVisibility);
+            updateCkptOptionsVisibility();
+        }
+
+        const clearHeaderBtn = document.getElementById('btn-clear-header');
+        const clearFormBtn = document.getElementById('btn-reset-all');
+        if (clearHeaderBtn) clearHeaderBtn.addEventListener('click', clearAllInputs);
+        if (clearFormBtn) clearFormBtn.addEventListener('click', clearAllInputs);
+
+
+
+        // Load sample files from server
+        fetch('/api/sample_files')
+            .then(res => res.json())
+            .then(data => {
+                mriSelect.innerHTML = '<option value="">-- Choose Pre-loaded MRI Sample --</option>';
+                spectSelect.innerHTML = '<option value="">-- Choose Pre-loaded SPECT Sample --</option>';
+
+                data.mri_files.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    mriSelect.appendChild(opt);
+                });
+
+                data.spect_files.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    spectSelect.appendChild(opt);
+                });
+
+                // Auto-select initial demo pair ONLY if no custom file was already restored/selected
+                if (mriFile.files && mriFile.files.length > 0) {
+                    updateMriMutualExclusion('file');
+                } else if (data.mri_files.length > 0) {
+                    mriSelect.selectedIndex = 1;
+                    updateMriMutualExclusion('select');
+                }
+
+                if (spectFile.files && spectFile.files.length > 0) {
+                    updateSpectMutualExclusion('file');
+                } else if (data.spect_files.length > 0) {
+                    spectSelect.selectedIndex = 1;
+                    updateSpectMutualExclusion('select');
+                }
+            });
+
+        // Toggle inputs based on model type
+        document.getElementById('model_type').addEventListener('change', function() {
+            const m = this.value;
+            const mriGrp = document.getElementById('mri-input-group');
+            const spectGrp = document.getElementById('spect-input-group');
+            
+            if (m === 'mri_only') {
+                mriGrp.style.display = 'block';
+                spectGrp.style.display = 'none';
+            } else if (m === 'spect_only') {
+                mriGrp.style.display = 'none';
+                spectGrp.style.display = 'block';
+            } else {
+                mriGrp.style.display = 'block';
+                spectGrp.style.display = 'block';
+            }
+        });
+
+        document.getElementById('diag-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            // Enforce strict mutual exclusion in payload before sending
+            if (mriFile.files && mriFile.files.length > 0) {
+                formData.set('selected_mri', '');
+            } else if (mriSelect.value !== '') {
+                formData.delete('mri_file');
+            }
+
+            if (spectFile.files && spectFile.files.length > 0) {
+                formData.set('selected_spect', '');
+            } else if (spectSelect.value !== '') {
+                formData.delete('spect_file');
+            }
+
+            document.getElementById('spinner').style.display = 'block';
+            document.getElementById('result-box').style.display = 'none';
+            document.getElementById('placeholder-box').style.display = 'none';
+
+            fetch('/api/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('spinner').style.display = 'none';
+
+                if (data.error) {
+                    alert("Diagnostic Inference Error: " + data.error);
+                    document.getElementById('placeholder-box').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('result-box').style.display = 'block';
+
+                const predClass = data.predicted_class;
+                const pill = document.getElementById('diag-pill');
+                pill.textContent = data.full_predicted_class;
+                pill.className = `diagnosis-pill diag-${predClass}`;
+
+                document.getElementById('conf-val').textContent = `${data.confidence.toFixed(1)}%`;
+                document.getElementById('entropy-val').textContent = `${data.entropy.toFixed(3)}`;
+                document.getElementById('arch-val').textContent = document.getElementById('model_type').value;
+
+                // Probability Bars
+                ['Control', 'Prodromal', 'PD'].forEach(c => {
+                    const prob = (data.probabilities[c] || 0).toFixed(1);
+                    document.getElementById(`prob-${c}-val`).textContent = `${prob}%`;
+                    document.getElementById(`prob-${c}-bar`).style.width = `${prob}%`;
+                });
+
+                // Slices Rendering
+                const mriBox = document.getElementById('mri-slice-box');
+                const spectBox = document.getElementById('spect-slice-box');
+
+                if (data.mri_slice_b64) {
+                    mriBox.style.display = 'block';
+                    document.getElementById('mri-img').src = `data:image/png;base64,${data.mri_slice_b64}`;
+                } else {
+                    mriBox.style.display = 'none';
+                }
+
+                if (data.spect_slice_b64) {
+                    spectBox.style.display = 'block';
+                    document.getElementById('spect-img').src = `data:image/png;base64,${data.spect_slice_b64}`;
+                } else {
+                    spectBox.style.display = 'none';
+                }
+            })
+            .catch(err => {
+                document.getElementById('spinner').style.display = 'none';
+                document.getElementById('placeholder-box').style.display = 'block';
+                alert('Connection or inference failure: ' + err);
+            });
+        });
+    </script>
+</body>
+</html>
+
